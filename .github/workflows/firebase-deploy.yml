@@ -3,7 +3,7 @@ name: 🚀 Deploy Firebase Hosting
 on:
   push:
     branches:
-      - main
+      - main  # Deploy automático apenas na branch main
 
 jobs:
   build-deploy:
@@ -20,12 +20,6 @@ jobs:
 
     - name: ⚡ Instalar Firebase CLI
       run: npm install -g firebase-tools
-
-    - name: 🔧 Verificar Firebase CLI
-      run: firebase --version
-
-    - name: 📂 Listar arquivos para debug
-      run: ls -R
 
     - name: 🚀 Fazer Deploy no Firebase Hosting
       run: firebase deploy --token ${{ secrets.FIREBASE_DEPLOY_TOKEN }} --project martfleet-firebase
