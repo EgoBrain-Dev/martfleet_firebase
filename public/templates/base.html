@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MartFleet - Gestão Inteligente de Frota</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js para dropdowns -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
+    
+    <!-- CSS Global -->
+    <link href="/css/main.css" rel="stylesheet">
+    <link href="/css/utilities.css" rel="stylesheet">
+    
+    <!-- CSS Específico da Página -->
+    <link id="page-css" rel="stylesheet">
+    
+    <!-- Meta Tags para PWA -->
+    <meta name="theme-color" content="#3B82F6">
+    <meta name="description" content="Sistema completo de gestão para frota de táxis - Controle financeiro, monitoramento de veículos e gestão de motoristas">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/assets/img/favicon.ico">
+    
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="/assets/icons/icon-192x192.png">
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- Header Navigation -->
+    <div id="header-container"></div>
+
+    <!-- Flash Messages System -->
+    <div id="notifications-container"></div>
+
+    <!-- Main Content Block -->
+    <main class="flex-grow" id="main-content">
+        <!-- Content will be dynamically loaded here -->
+    </main>
+
+    <!-- Footer -->
+    <div id="footer-container"></div>
+
+    <!-- Firebase Configuration -->
+    <script src="/firebase-config.js"></script>
+    
+    <!-- JavaScript Global -->
+    <script src="/js/utils.js"></script>
+    <script src="/js/main.js"></script>
+    
+    <!-- JavaScript Específico da Página -->
+    <script id="page-js"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(function(error) {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load common components
+            loadComponent('header-container', '/templates/partials/header.html');
+            loadComponent('notifications-container', '/templates/partials/notifications.html');
+            loadComponent('footer-container', '/templates/partials/footer.html');
+            
+            // Load initial page
+            loadPage('/templates/index.html');
+        });
+
+        // Function to load HTML components
+        async function loadComponent(containerId, componentPath) {
+            try {
+                const response = await fetch(componentPath);
+                const html = await response.text();
+                document.getElementById(containerId).innerHTML = html;
+            } catch (error) {
+                console.error('Error loading component:', error);
+            }
+        }
+
+        // Function to load pages (SPA navigation)
+        async function loadPage(pagePath, cssPath = '', jsPath = '') {
+            try {
+                const response = await fetch(pagePath);
+                const html = await response.text();
+                document.getElementById('main-content').innerHTML = html;
+                
+                // Load page-specific CSS
+                const pageCss = document.getElementById('page-css');
+                if (cssPath) {
+                    pageCss.href = cssPath;
+                } else {
+                    pageCss.href = '';
+                }
+                
+                // Load page-specific JS
+                const pageJs = document.getElementById('page-js');
+                if (jsPath) {
+                    pageJs.src = jsPath;
+                } else {
+                    pageJs.src = '';
+                }
+                
+                // Update browser history
+                window.history.pushState({ path: pagePath }, '', getCleanPath(pagePath));
+                
+            } catch (error) {
+                console.error('Error loading page:', error);
+                document.getElementById('main-content').innerHTML = `
+                    <div class="container mx-auto px-4 py-8">
+                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                            <h2 class="text-lg font-bold">Erro ao carregar página</h2>
+                            <p>A página solicitada não pôde ser carregada.</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Helper function to get clean path for navigation
+        function getCleanPath(fullPath) {
+            return fullPath.replace('/templates', '');
+        }
+
+        // Handle browser back/forward buttons
+        window.addEventListener('popstate', function(event) {
+            if (event.state && event.state.path) {
+                loadPage(event.state.path);
+            }
+        });
+    </script>
+</body>
+</html>
